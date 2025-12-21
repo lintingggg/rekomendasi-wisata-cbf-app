@@ -1,50 +1,34 @@
 import pandas as pd
 import difflib
-import re
 import os
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
-from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 
 def load_model():
-    df = pd.read_csv('data/destinasi-wisata-indonesia.csv')
+    df = pd.read_csv('data/destinasi-wisata-preprocessed.csv')
 
-    selected_features = ['Place_Name', 'Description', 'Category', 'City']
-    for f in selected_features:
-        df[f] = df[f].fillna('')
+    # Kolom wajib
+    required_cols = ['Place_Name', 'Category', 'City', 'clean_text']
+    for col in required_cols:
+        if col not in df.columns:
+            raise ValueError(f"Kolom '{col}' tidak ditemukan di dataset.")
 
-    stopword_factory = StopWordRemoverFactory()
-    stopwords = set(stopword_factory.get_stop_words())
-    stemmer = StemmerFactory().create_stemmer()
+    df[required_cols] = df[required_cols].fillna('')
 
-    def preprocess(text):
-        text = text.lower()
-        text = re.sub(r'[^a-z\s]', ' ', text)
-        tokens = text.split()
-        tokens = [t for t in tokens if t not in stopwords]
-        tokens = [stemmer.stem(t) for t in tokens]
-        return ' '.join(tokens)
-
-    df['combined_features'] = (
-        df['Place_Name'] + ' ' +
-        df['Description'] + ' ' +
-        df['Category'] + ' ' +
-        df['City']
-    ).apply(preprocess)
-
+    # TF-IDF langsung dari teks bersih
     vectorizer = TfidfVectorizer(
         ngram_range=(1, 2),
         max_df=0.9,
         min_df=2
     )
 
-    vectors = vectorizer.fit_transform(df['combined_features'])
+    vectors = vectorizer.fit_transform(df['clean_text'])
     similarity = cosine_similarity(vectors)
 
     return df, similarity
+
 
 def get_places_by_category(model, category_keyword):
     df, _ = model
