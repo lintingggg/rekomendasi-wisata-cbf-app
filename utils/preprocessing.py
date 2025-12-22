@@ -1,6 +1,5 @@
 import pandas as pd
 import re
-
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 
@@ -52,6 +51,22 @@ def preprocess_text(text: str) -> str:
     sw = stopword_removal(tk)
     st = stemming(sw)
     return " ".join(st)
+
+def preprocess_text_steps(text: str) -> dict:
+    cf = case_folding(text)
+    tk = tokenizing(cf)
+    sw = stopword_removal(tk)
+    st = stemming(sw)
+
+    return {
+        "original": text,
+        "case_folding": cf,
+        "tokenizing": tk,
+        "stopword_removal": sw,
+        "stemming": st,
+        "clean_text": " ".join(st)
+    }
+
 
 
 # =========================

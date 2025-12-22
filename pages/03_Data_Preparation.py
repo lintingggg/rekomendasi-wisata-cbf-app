@@ -3,8 +3,12 @@ import pandas as pd
 from utils.preprocessing import (
     preprocess_and_save,
     preprocess_text,
-    combine_text_features
+    combine_text_features,
+    preprocess_text_steps
 )
+
+import os
+
 
 st.set_page_config(
     page_title="Data Preparation",
@@ -31,18 +35,22 @@ INPUT_PATH = "data/destinasi-wisata-indonesia.csv"
 OUTPUT_PATH = "data/destinasi-wisata-preprocessed.csv"
 TEXT_COLUMNS = ["Place_Name", "Description", "Category", "City"]
 
-# =========================
-# LOAD & PREPROCESS DATA
-# =========================
-df = preprocess_and_save(
-    input_path=INPUT_PATH,
-    output_path=OUTPUT_PATH,
-    text_columns=TEXT_COLUMNS
-)
+@st.cache_data(show_spinner=False)
+def load_or_preprocess():
+    if os.path.exists(OUTPUT_PATH):
+        return pd.read_csv(OUTPUT_PATH)
+    else:
+        return preprocess_and_save(
+            input_path=INPUT_PATH,
+            output_path=OUTPUT_PATH,
+            text_columns=TEXT_COLUMNS
+        )
+
+df = load_or_preprocess()
 
 # Ambil 1 contoh data
 sample_text = df["combined_text"].iloc[0]
-result = preprocess_text(sample_text)
+result = preprocess_text_steps(sample_text)
 
 # =========================
 # 1. GABUNGKAN FITUR
